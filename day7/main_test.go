@@ -2,10 +2,9 @@ package main
 
 import "testing"
 
-func Test_complete(t *testing.T) {
+func Test_sortSteps(t *testing.T) {
 	type args struct {
-		s     string
-		steps map[string]*step
+		req requirements
 	}
 	tests := []struct {
 		name string
@@ -15,8 +14,7 @@ func Test_complete(t *testing.T) {
 		{
 			"CABDFE",
 			args{
-				s: "E",
-				steps: buildGraph(
+				req: newRequirements(
 					[]instruction{
 						instruction{step: "F", precond: "C"},
 						instruction{step: "D", precond: "A"},
@@ -33,8 +31,7 @@ func Test_complete(t *testing.T) {
 		{
 			"BAXC",
 			args{
-				s: "C",
-				steps: buildGraph(
+				req: newRequirements(
 					[]instruction{
 						instruction{step: "C", precond: "A"},
 						instruction{step: "C", precond: "X"},
@@ -48,8 +45,7 @@ func Test_complete(t *testing.T) {
 		{
 			"DABHJPFZ",
 			args{
-				s: "Z",
-				steps: buildGraph(
+				req: newRequirements(
 					[]instruction{
 						instruction{step: "A", precond: "D"},
 						instruction{step: "H", precond: "D"},
@@ -68,7 +64,7 @@ func Test_complete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := complete(tt.args.s, tt.args.steps); got != tt.want {
+			if got := tt.args.req.completionOrder(); got != tt.want {
 				t.Errorf("complete() = %v, want %v", got, tt.want)
 			}
 		})
