@@ -17,8 +17,9 @@ func (c coord) manhattanDistance(x, y int) int {
 }
 
 type distance struct {
-	coordID  string
-	distance int
+	coordID     string
+	distance    int
+	distanceSum int
 }
 
 func main() {
@@ -56,10 +57,11 @@ func main() {
 	}
 	grid := distancesGrid(coords, maxX+1, maxY+1)
 	id, largest := largestFiniteArea(grid)
-
 	c := find(coords, id)
-
 	fmt.Printf("Location at (%d, %d) has the largest finite area: %d\n", c.x, c.y, largest)
+
+	p2 := part2(grid)
+	fmt.Printf("Size of the region with total distance less than 10.000: %d\n", p2)
 
 }
 
@@ -102,29 +104,38 @@ func distancesGrid(coords []coord, width, height int) [][]*distance {
 	}
 
 	for _, coord := range coords {
-		grid[coord.y][coord.x] = &distance{coord.id, 0}
-
-		for y := 0; y < height; y++ {
-			for x := 0; x < width; x++ {
-				if x == coord.x && y == coord.y {
-					continue
-				}
-				d := grid[y][x]
+		for y, row := range grid {
+			for x, d := range row {
 				md := coord.manhattanDistance(x, y)
 				if d == nil {
-					grid[y][x] = &distance{coord.id, md}
+					grid[y][x] = &distance{coord.id, md, 0}
 				} else if d.distance == md {
 					d.coordID = "."
 				} else if d.distance > md {
 					d.coordID = coord.id
 					d.distance = md
 				}
+				grid[y][x].distanceSum += md
 			}
 		}
 
 	}
 
 	return grid
+}
+
+//part2 returns ithe size of the region containing all locations which have a total distance to all given coordinates of less than 10000
+func part2(distances [][]*distance) int {
+	total := 0
+	for _, row := range distances {
+		for _, d := range row {
+			if d.distanceSum < 10000 {
+				total++
+			}
+		}
+	}
+
+	return total
 }
 
 func abs(x int) int {
