@@ -13,6 +13,10 @@ type step struct {
 	finished  bool
 }
 
+func (s step) duration() int {
+	return 61 + int(s.id[0]) - 'A'
+}
+
 type instruction struct {
 	step    string
 	precond string
@@ -42,34 +46,82 @@ func main() {
 	}
 	req := newRequirements(instructions)
 
-	fmt.Printf("Instruction steps order: %s\n", req.completionOrder())
+	order := req.completionOrder()
+
+	fmt.Printf("Instruction steps order: %s\n", order)
+
+	req.reset()
+	order, time := req.parallelCompletionOrder(5)
+	fmt.Printf("Instruction steps order: %s\n", order)
+	fmt.Printf("Steps were completed in %d seconds\n", time)
 }
 
 type requirements map[string]*step
 
 func (i requirements) completionOrder() string {
+
 	root := i.root()
 	var stack []*step
 	stack = append(stack, root)
-
 	result := ""
 
 	for n := len(stack); n > 0; n = len(stack) {
 
 		sort.Slice(stack, func(i, j int) bool {
-			return stack[i].id > stack[j].id
+			return stack[i].id < stack[j].id
 		})
-		current := stack[n-1]
+		current := stack[0]
 		if !current.finished {
 			current.finished = true
 			result += current.id
-			stack = append(stack[:n-1], i.completeStep(current.id)...)
+			stack = append(stack[1:], i.completeStep(current.id)...)
 		} else {
-			stack = stack[:n-1]
+			stack = stack[1:]
 		}
 	}
-
 	return result
+}
+func (i requirements) parallelCompletionOrder(wc int) (string, int) {
+	root := i.root()
+	var stack []*step
+
+	result := ""
+	workers := make(map[*step]int)
+	workers[root] = root.duration()
+	totalTime := 0
+	for len(workers) > 0 {
+		totalTime++
+		var keys []*step
+		for k := range workers {
+			keys = append(keys, k)
+		}
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].id < keys[j].id
+		})
+		for _, step := range keys {
+			if workers[step] == 1 {
+				delete(workers, step)
+				step.finished = true
+				result += step.id
+				stack = append(stack, i.completeStep(step.id)...)
+				sort.Slice(stack, func(i, j int) bool {
+					return stack[i].id < stack[j].id
+				})
+				n := len(stack)
+				index := 0
+				for ; index < n && len(workers) < wc; index++ {
+					bla := stack[index]
+					workers[bla] = bla.duration()
+				}
+				stack = stack[index:]
+			} else {
+				workers[step]--
+			}
+		}
+
+	}
+
+	return result, totalTime
 }
 
 //completeStep returns the list of steps that can be processed
@@ -90,6 +142,12 @@ func (i requirements) root() *step {
 		}
 	}
 	return nil
+}
+
+func (i requirements) reset() {
+	for _, step := range i {
+		step.finished = false
+	}
 }
 func (i requirements) allTriggered(steps []string) bool {
 	for _, id := range steps {
