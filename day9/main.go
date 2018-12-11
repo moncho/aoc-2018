@@ -6,6 +6,11 @@ import (
 	"os"
 )
 
+type marble struct {
+	prev, next *marble
+	val        int
+}
+
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
@@ -44,37 +49,34 @@ func highestScore(scores []int) int {
 
 func scores(players, plays int) []int {
 	scores := make([]int, players)
-	board := make(map[int]int)
-	board[0] = 0
-	board[1] = 2
-	board[2] = 1
-	currentPos := 1
-	for marble := 3; marble <= plays; marble++ {
-		boardLen := len(board)
-		if marble%23 == 0 {
-			if currentPos < 7 {
-				currentPos = boardLen - (7 - currentPos)
-			} else {
-				currentPos = currentPos - 7
-			}
-			scores[marble%players] += marble
-			scores[marble%players] += board[currentPos]
-			for i := currentPos; i < boardLen; i++ {
-				board[i] = board[i+1]
-			}
-			delete(board, boardLen-1)
-			continue
-		}
-		currentPos = nextPosition(currentPos, boardLen)
-		if currentPos == marble {
-			board[currentPos] = marble
-		} else {
-			m := marble
-			for i := currentPos; i <= boardLen; i++ {
-				board[i], m = m, board[i]
-			}
-		}
+	current := &marble{
+		val: 0,
+	}
+	current.prev = current
+	current.next = current
+	prev, next := current, current
 
+	for play := 1; play <= plays; play++ {
+		if play%23 == 0 {
+			for i := 0; i < 7; i++ {
+				current = current.prev
+			}
+			prev = current.prev
+			next = current.next
+			scores[play%players] += play
+			scores[play%players] += current.val
+			prev.next, next.prev = next, prev
+			current = next
+		} else {
+			prev, next = current.next, current.next.next
+			current = &marble{
+				val:  play,
+				next: next,
+				prev: prev,
+			}
+			prev.next = current
+			next.prev = current
+		}
 	}
 
 	return scores
