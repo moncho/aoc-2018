@@ -29,6 +29,22 @@ func (n *node) metadataSum() int {
 	return sum
 }
 
+func (n *node) nodeValue() int {
+	sum := 0
+	if n.header.childCount == 0 {
+		for _, m := range n.metadata {
+			sum += m
+		}
+	} else {
+		for _, m := range n.metadata {
+			if m <= n.header.childCount {
+				sum += n.children[m-1].nodeValue()
+			}
+		}
+	}
+	return sum
+}
+
 type header struct {
 	childCount    int
 	metadataCount int
@@ -58,6 +74,8 @@ func main() {
 	}
 	root, _ := treeNode(numbers)
 	fmt.Printf("Metadata sum: %d\n", root.metadataSum())
+	fmt.Printf("Root node value: %d\n", root.nodeValue())
+
 }
 
 func treeNode(numbers []int) (*node, []int) {
