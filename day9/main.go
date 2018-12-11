@@ -54,7 +54,7 @@ func scores(players, plays int) []int {
 	}
 	current.prev = current
 	current.next = current
-	prev, next := current, current
+	var prev, next *marble
 
 	for play := 1; play <= plays; play++ {
 		if play%23 == 0 {
@@ -80,17 +80,4 @@ func scores(players, plays int) []int {
 	}
 
 	return scores
-}
-
-func nextPosition(cursor, count int) int {
-	switch count {
-	case 0:
-		return 0
-	case 1:
-		return 1
-	case cursor + 1:
-		return 1
-	}
-
-	return cursor + 2
 }
