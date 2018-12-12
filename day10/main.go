@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"image"
 	"math"
 	"os"
 )
@@ -47,44 +46,63 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
-	future := fastForward(points)
+	future, time := fastForward(points)
 	draw(future)
+	fmt.Printf("Took %d seconds to reach the future.\n", time)
+
 }
 
-func fastForward(points []*point) []*point {
+func fastForward(points []*point) ([]*point, int) {
 	keepMoving := true
+	i := 0
+	//TODO figure out a way to stop going forward without using magic
+	//numbers
+	//15 was the result of manually checking  and tweaking values until
+	// the result was good.
+	magicNumber := 15
+
+	//This get us closer by is not enough
 	for keepMoving {
+		i++
 		keepMoving = false
 		for _, p := range points {
-			p.tick(100)
+			p.tick(magicNumber)
 			if !p.visible() {
 				keepMoving = true
 			}
 		}
 	}
-	return points
+	//15 more ticks are needed
+	for _, p := range points {
+		p.tick(magicNumber)
+	}
+
+	return points, i*magicNumber + magicNumber
 }
 
 func draw(points []*point) {
-	b := bounds(points)
-	s := b.Size()
-	arr := make([][]rune, s.Y)
-	for iy := range arr {
-		arr[iy] = make([]rune, s.X)
-		for ix := range arr[iy] {
-			arr[iy][ix] = '.'
+	minX, minY, maxX, maxY := minMax(points)
+
+	message := make([][]rune, maxY-minY+1)
+	for y := range message {
+		message[y] = make([]rune, maxX-minX+1)
+		for x := range message[y] {
+			message[y][x] = '.'
 		}
 	}
 
+	var normY, normX int
 	for _, p := range points {
-		arr[p.y][p.x] = '#'
+		normY = (p.y - minY)
+		normX = (p.x - minX)
+		message[normY][normX] = '#'
 	}
-	for _, line := range arr {
+	for _, line := range message {
 		fmt.Println(string(line))
 	}
 }
 
-func bounds(points []*point) image.Rectangle {
+func minMax(points []*point) (int, int, int, int) {
 
 	maxX, maxY := 0, 0
 	minX, minY := math.MaxInt32, math.MaxInt32
@@ -106,6 +124,6 @@ func bounds(points []*point) image.Rectangle {
 
 	}
 
-	return image.Rect(minX, minY, maxX, maxY)
+	return minX, minY, maxX, maxY
 
 }
