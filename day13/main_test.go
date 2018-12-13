@@ -125,7 +125,7 @@ func Test_cart_turnLeft(t *testing.T) {
 				direction: faceDown,
 			},
 			newState: &cart{
-				x:         2,
+				x:         1,
 				y:         1,
 				direction: faceRight,
 			},
@@ -139,7 +139,7 @@ func Test_cart_turnLeft(t *testing.T) {
 			},
 			newState: &cart{
 				x:         1,
-				y:         2,
+				y:         1,
 				direction: faceDown,
 			},
 		},
@@ -151,7 +151,7 @@ func Test_cart_turnLeft(t *testing.T) {
 				direction: faceUp,
 			},
 			newState: &cart{
-				x:         0,
+				x:         1,
 				y:         1,
 				direction: faceLeft,
 			},
@@ -165,7 +165,7 @@ func Test_cart_turnLeft(t *testing.T) {
 			},
 			newState: &cart{
 				x:         1,
-				y:         0,
+				y:         1,
 				direction: faceUp,
 			},
 		},
@@ -200,7 +200,7 @@ func Test_cart_turnRight(t *testing.T) {
 				direction: faceDown,
 			},
 			newState: &cart{
-				x:         0,
+				x:         1,
 				y:         1,
 				direction: faceLeft,
 			},
@@ -214,7 +214,7 @@ func Test_cart_turnRight(t *testing.T) {
 			},
 			newState: &cart{
 				x:         1,
-				y:         0,
+				y:         1,
 				direction: faceUp,
 			},
 		},
@@ -226,7 +226,7 @@ func Test_cart_turnRight(t *testing.T) {
 				direction: faceUp,
 			},
 			newState: &cart{
-				x:         2,
+				x:         1,
 				y:         1,
 				direction: faceRight,
 			},
@@ -240,7 +240,7 @@ func Test_cart_turnRight(t *testing.T) {
 			},
 			newState: &cart{
 				x:         1,
-				y:         2,
+				y:         1,
 				direction: faceDown,
 			},
 		},
