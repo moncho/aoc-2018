@@ -35,14 +35,13 @@ func main() {
 	fmt.Printf("Grid %dx%d serial no: %d\n", gridSize, gridSize, serNo)
 
 	grid := make([][]*cell, gridSize)
-	var c cell
 	for y := range grid {
 		row := make([]*cell, gridSize)
 		grid[y] = row
 		for x := range row {
-			c = cell{
+			c := cell{
 				x: x + 1,
-				y: y + y,
+				y: y + 1,
 			}
 			c.powerLevel(serNo)
 			grid[y][x] = &c
@@ -52,26 +51,25 @@ func main() {
 
 	maxX, maxY := 0, 0
 	maxPower := 0
+	maxSize := 0
 	for gs := 0; gs < gridSize; gs++ {
-		for y := 1; y <= gridSize-3; y++ {
-			for x := 1; x <= gridSize-3; x++ {
-				power := powerLevel(x, y, serNo) +
-					powerLevel(x+1, y, serNo) +
-					powerLevel(x+2, y, serNo) +
-					powerLevel(x, y+1, serNo) +
-					powerLevel(x+1, y+1, serNo) +
-					powerLevel(x+2, y+1, serNo) +
-					powerLevel(x, y+2, serNo) +
-					powerLevel(x+1, y+2, serNo) +
-					powerLevel(x+2, y+2, serNo)
+		for y := 0; y < gridSize-gs; y++ {
+			for x := 0; x < gridSize-gs; x++ {
+				power := 0
+				for difx := gs; difx >= 0; difx-- {
+					for dify := gs; dify >= 0; dify-- {
+						power += grid[y+dify][x+difx].powerLevel(serNo)
+					}
+				}
 				if power > maxPower {
 					maxX = x
 					maxY = y
 					maxPower = power
+					maxSize = gs
 				}
 			}
 		}
 	}
-	fmt.Printf("Top-left fuel cell found at: %dx%d \n", maxX, maxY)
+	fmt.Printf("Top-left fuel cell found at: %dx%d, grid side: %d\n", maxX+1, maxY+1, maxSize+1)
 
 }
