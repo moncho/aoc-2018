@@ -86,6 +86,7 @@ func (c *cart) id() string {
 func runSimulation(grid [][]rune, carts []*cart) (int, int) {
 	collision := false
 	collisionX, collisionY := -1, -1
+
 	for !collision {
 		sort.Slice(carts, func(i, j int) bool {
 			if carts[i].y == carts[j].y {
@@ -93,25 +94,25 @@ func runSimulation(grid [][]rune, carts []*cart) (int, int) {
 			}
 			return carts[i].y < carts[j].y
 		})
-		visited := make(map[string]bool)
+		visited := make(map[string]*cart)
 		for _, cart := range carts {
 			id := cart.id()
-			if visited[id] {
+			if _, ok := visited[id]; ok {
 				collision = true
 				collisionX = cart.x
 				collisionY = cart.y
 				break
 			}
-			visited[id] = true
+			delete(visited, id)
 			tick(cart, grid)
 			id = cart.id()
-			if visited[id] {
+			if _, ok := visited[id]; ok {
 				collision = true
 				collisionX = cart.x
 				collisionY = cart.y
 				break
 			}
-			visited[id] = true
+			visited[id] = cart
 		}
 	}
 	return collisionX, collisionY
