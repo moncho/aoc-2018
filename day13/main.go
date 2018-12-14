@@ -86,7 +86,6 @@ func (c *cart) id() string {
 
 func runSimulation(grid [][]rune, carts []*cart) ([]*cart, []*cart) {
 	var broken []*cart
-	var cart *cart
 	wc := workingCarts(carts)
 	for len(wc) > 1 {
 		sort.Slice(wc, func(i, j int) bool {
@@ -97,8 +96,7 @@ func runSimulation(grid [][]rune, carts []*cart) ([]*cart, []*cart) {
 		})
 		visited := make(map[string]int)
 
-		for i := 0; i < len(wc); i++ {
-			cart = wc[i]
+		for i, cart := range wc {
 			id := cart.id()
 			if other, ok := visited[id]; ok {
 				if wc[other].working {
