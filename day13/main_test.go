@@ -297,11 +297,13 @@ func Test_newGrid(t *testing.T) {
 					x:         2,
 					y:         0,
 					direction: faceRight,
+					working:   true,
 				},
 				&cart{
 					x:         9,
 					y:         3,
 					direction: faceDown,
+					working:   true,
 				},
 			},
 		},
@@ -639,12 +641,12 @@ func Test_runSimulation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			grid, carts := newGrid(strings.NewReader(tt.grid))
-			got, got1 := runSimulation(grid, carts)
-			if got != tt.want {
-				t.Errorf("runSimulation() got = %v, want %v", got, tt.want)
+			broken, _ := runSimulation(grid, carts)
+			if broken[0].x != tt.want {
+				t.Errorf("runSimulation() got = %v, want %v", broken[0].x, tt.want)
 			}
-			if got1 != tt.want1 {
-				t.Errorf("runSimulation() got1 = %v, want %v", got1, tt.want1)
+			if broken[0].y != tt.want1 {
+				t.Errorf("runSimulation() got1 = %v, want %v", broken[0].y, tt.want1)
 			}
 		})
 	}

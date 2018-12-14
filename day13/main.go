@@ -26,6 +26,7 @@ type cart struct {
 	x, y      int
 	nextCross int
 	direction rune
+	working   bool
 }
 
 func (c *cart) move() {
@@ -83,39 +84,49 @@ func (c *cart) id() string {
 	return strconv.Itoa(c.x) + "," + strconv.Itoa(c.y)
 }
 
-func runSimulation(grid [][]rune, carts []*cart) (int, int) {
-	collision := false
-	collisionX, collisionY := -1, -1
-
-	for !collision {
-		sort.Slice(carts, func(i, j int) bool {
-			if carts[i].y == carts[j].y {
-				return carts[i].x < carts[j].x
+func runSimulation(grid [][]rune, carts []*cart) ([]*cart, []*cart) {
+	var broken []*cart
+	var cart *cart
+	wc := workingCarts(carts)
+	for len(wc) > 1 {
+		sort.Slice(wc, func(i, j int) bool {
+			if wc[i].y == wc[j].y {
+				return wc[i].x < wc[j].x
 			}
-			return carts[i].y < carts[j].y
+			return wc[i].y < wc[j].y
 		})
-		visited := make(map[string]*cart)
-		for _, cart := range carts {
+		visited := make(map[string]int)
+
+		for i := 0; i < len(wc); i++ {
+			cart = wc[i]
 			id := cart.id()
-			if _, ok := visited[id]; ok {
-				collision = true
-				collisionX = cart.x
-				collisionY = cart.y
-				break
+			if other, ok := visited[id]; ok {
+				if wc[other].working {
+					broken = append(broken, wc[other])
+					wc[other].working = false
+				}
+				broken = append(broken, cart)
+				cart.working = false
+				continue
 			}
-			delete(visited, id)
 			tick(cart, grid)
 			id = cart.id()
-			if _, ok := visited[id]; ok {
-				collision = true
-				collisionX = cart.x
-				collisionY = cart.y
-				break
+			if other, ok := visited[id]; ok {
+				if wc[other].working {
+					broken = append(broken, wc[other])
+					wc[other].working = false
+				}
+				broken = append(broken, cart)
+				cart.working = false
+				continue
 			}
-			visited[id] = cart
+			visited[id] = i
+
 		}
+		wc = workingCarts(wc)
+
 	}
-	return collisionX, collisionY
+	return broken, wc
 }
 func newGrid(r io.Reader) ([][]rune, []*cart) {
 	scanner := bufio.NewScanner(r)
@@ -132,6 +143,7 @@ func newGrid(r io.Reader) ([][]rune, []*cart) {
 					x:         pos,
 					y:         lc,
 					direction: r,
+					working:   true,
 				})
 				if r == faceUp || r == faceDown {
 					r = vertical
@@ -150,6 +162,15 @@ func newGrid(r io.Reader) ([][]rune, []*cart) {
 	return grid, carts
 }
 
+func workingCarts(carts []*cart) []*cart {
+	result := carts[:0]
+	for _, c := range carts {
+		if c.working {
+			result = append(result, c)
+		}
+	}
+	return result
+}
 func print(runes [][]rune) {
 	for _, line := range runes {
 		fmt.Printf("%s\n", string(line))
@@ -192,8 +213,12 @@ func main() {
 	grid, carts := newGrid(file)
 	defer file.Close()
 
-	x, y := runSimulation(grid, carts)
-	fmt.Printf("Collision at %d,%d\n", x, y)
+	broken, left := runSimulation(grid, carts)
+	fmt.Printf("Broken carts: %d\n", len(broken))
+	fmt.Printf("First collision at: %d,%d\n", broken[0].x, broken[0].y)
+
+	fmt.Printf("Carts left: %d\n", len(left))
+	fmt.Printf("Last cart standing at: %d,%d\n", left[0].x, left[0].y)
 
 	for _, c := range carts {
 		if isCart(grid[c.y][c.x]) {
