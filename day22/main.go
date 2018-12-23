@@ -98,7 +98,7 @@ func main() {
 
 	fmt.Printf("Risk level: %d\n", cave.riskLevel())
 
-	e := rescue(cave)
+	e := rescueMission(cave)
 	p, distance, _ := astar.Path(e, explorer{
 		cave: cave,
 		tool: torch,

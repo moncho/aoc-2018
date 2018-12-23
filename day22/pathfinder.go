@@ -74,7 +74,7 @@ type explorer struct {
 	tool tool
 }
 
-func rescue(cave *cave) explorer {
+func rescueMission(cave *cave) explorer {
 	explorer := explorer{
 		x:    0,
 		y:    0,

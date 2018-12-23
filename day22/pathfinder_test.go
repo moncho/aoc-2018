@@ -35,7 +35,7 @@ func TestTile_PathFinder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cave := tt.args.cave
-			e := rescue(cave)
+			e := rescueMission(cave)
 			p, distance, found := astar.Path(e, explorer{
 				cave: cave,
 				tool: torch,
