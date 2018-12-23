@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/beefsack/go-astar"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,6 +15,23 @@ const (
 	narrow
 )
 
+const (
+	torch tool = iota
+	climbingGear
+	bareHands
+)
+
+var forbiddenTools = map[regionType]tool{
+	rocky:  bareHands,
+	wet:    torch,
+	narrow: climbingGear,
+}
+
+var tools []tool = []tool{
+	torch, climbingGear, bareHands,
+}
+
+type tool int
 type regionType int
 
 type xy struct {
@@ -79,6 +97,17 @@ func main() {
 	cave := newCave(f)
 
 	fmt.Printf("Risk level: %d\n", cave.riskLevel())
+
+	e := rescue(cave)
+	p, distance, _ := astar.Path(e, explorer{
+		cave: cave,
+		tool: torch,
+		x:    cave.targetX,
+		y:    cave.targetY,
+	})
+	_ = p
+	fmt.Printf("Number of minutes until target is reach: %d\n", int(distance))
+
 }
 
 func newCave(r io.Reader) *cave {
