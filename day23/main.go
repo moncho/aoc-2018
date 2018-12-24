@@ -54,11 +54,11 @@ func main() {
 		return nanos[i].r < nanos[j].r
 	})
 
-	strongesNano := nanos[len(nanos)-1]
+	strongestNano := nanos[len(nanos)-1]
 	fmt.Printf("Nanos: %d\n", len(nanos))
-	fmt.Printf("Strongest signal: %d\n", strongesNano.r)
+	fmt.Printf("Strongest signal: %d\n", strongestNano.r)
 
-	inRange := filterInRange(strongesNano, nanos)
+	inRange := filterInRange(strongestNano, nanos)
 
 	fmt.Printf("Nanobots in range of strongest signal: %d\n", len(inRange))
 
