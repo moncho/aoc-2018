@@ -71,14 +71,9 @@ func mostInRange(nanos []nanobot) xyz {
 	//The zoom level can be adjusted, current value works for
 	//the problem input
 	zoomLevel := 1 << 32
+	zoomedBots := make([]nanobot, len(nanos))
 
 	for {
-		zoomedBots := make([]nanobot, len(nanos))
-		best := struct {
-			pos   xyz
-			count int
-		}{}
-
 		for i, n := range nanos {
 			zc := nanobot{
 				xyz{
@@ -86,6 +81,11 @@ func mostInRange(nanos []nanobot) xyz {
 				}, n.r / zoomLevel}
 			zoomedBots[i] = zc
 		}
+
+		best := struct {
+			pos   xyz
+			count int
+		}{}
 
 		for cur.x = min.x; cur.x <= max.x; cur.x++ {
 			for cur.y = min.y; cur.y <= max.y; cur.y++ {
