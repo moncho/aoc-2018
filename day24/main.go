@@ -22,19 +22,33 @@ type group struct {
 	targetBy    *group
 }
 
-func (g *group) hasUnits() bool {
-	return g.units > 0
-
+func (g *group) attackSelectedEnemy() bool {
+	if g.target == nil {
+		return false
+	}
+	attacked := false
+	damage := g.damageTo(g.target) * g.units
+	if damage > 0 {
+		killedUnits := damage / g.target.hp
+		g.target.units -= killedUnits
+		attacked = true
+	}
+	//After an attack, target is lost
+	g.target.targetBy = nil
+	g.target = nil
+	return attacked
 }
-func (g *group) effectivePower() int {
-	return g.units * g.attackPower
-}
-func (g *group) immuneTo(attackType string) bool {
-	return g.immunities[attackType]
-}
-
-func (g *group) weakTo(attackType string) bool {
-	return g.weaknesses[attackType]
+func (g *group) clone() *group {
+	return &group{
+		id:          g.id,
+		units:       g.units,
+		hp:          g.hp,
+		attackPower: g.attackPower,
+		attackType:  g.attackType,
+		initiative:  g.initiative,
+		weaknesses:  g.weaknesses,
+		immunities:  g.immunities,
+	}
 }
 func (g *group) damageTo(other *group) int {
 	if other.weakTo(g.attackType) {
@@ -42,17 +56,17 @@ func (g *group) damageTo(other *group) int {
 	}
 	return g.attackPower
 }
-func (g *group) attackSelectedEnemy() {
-	if g.target == nil {
-		return
-	}
-	damage := g.damageTo(g.target) * g.units
-	killedUnits := damage / g.target.hp
-	g.target.units -= killedUnits
-	//After an attack, target is lost
-	g.target.targetBy = nil
-	g.target = nil
+func (g *group) effectivePower() int {
+	return g.units * g.attackPower
 }
+
+func (g *group) hasUnits() bool {
+	return g.units > 0
+}
+func (g *group) immuneTo(attackType string) bool {
+	return g.immunities[attackType]
+}
+
 func (g *group) targetEnemy(enemies []*group) {
 	var target *group
 	maxDamage := 0
@@ -83,6 +97,10 @@ func (g *group) targetEnemy(enemies []*group) {
 	}
 }
 
+func (g *group) weakTo(attackType string) bool {
+	return g.weaknesses[attackType]
+}
+
 func main() {
 	f, err := os.Open("input.txt")
 	if err != nil {
@@ -91,18 +109,40 @@ func main() {
 	defer f.Close()
 
 	immuneSystem, infection := readInput(f)
-	print("Immune System", immuneSystem)
-	print("Infection", infection)
-	immuneSystem, infection = fight(immuneSystem, infection)
-	print("Immune System", immuneSystem)
-	print("Infection", infection)
+	immuneSystemCopy := clone(immuneSystem)
+	infectionCopy := clone(infection)
+	immuneSystemCopy, infectionCopy = fight(immuneSystemCopy, infectionCopy)
+	//print("Immune System", immuneSystemCopy)
+	//print("Infection", infectionCopy)
 
-	fmt.Printf("Immune System has %d units left after combat\n", countUnits(immuneSystem))
-	fmt.Printf("Infection has %d units left after combat\n", countUnits(infection))
+	fmt.Printf("Immune System has %d units left after combat\n", countUnits(immuneSystemCopy))
+	fmt.Printf("Infection has %d units left after combat\n", countUnits(infectionCopy))
 
+	fmt.Println("Trying to find optimal boost...")
+
+	is, in := fightUntilImmuneSystemWins(immuneSystem, infection)
+	fmt.Printf("Immune System has %d units left after combat\n", countUnits(is))
+	fmt.Printf("Infection has %d units left after combat\n", countUnits(in))
+
+}
+func fightUntilImmuneSystemWins(immuneSystem, infection []*group) ([]*group, []*group) {
+
+	for i := 2; ; i++ {
+		immuneSystemCopy := clone(immuneSystem)
+		infectionCopy := clone(infection)
+		boost(i, immuneSystemCopy)
+		immuneSystemCopy, infectionCopy = fight(immuneSystemCopy, infectionCopy)
+		if len(immuneSystemCopy) > 0 && len(infectionCopy) == 0 {
+			return immuneSystemCopy, infectionCopy
+		}
+
+	}
 }
 
 func fight(immuneSystem, infection []*group) ([]*group, []*group) {
+	lastImmuneCount := 0
+	lastInfectionCount := 0
+
 	for len(immuneSystem) > 0 && len(infection) > 0 {
 		//target Selection
 		sortByEffectivePower(immuneSystem)
@@ -118,13 +158,35 @@ func fight(immuneSystem, infection []*group) ([]*group, []*group) {
 		groups = append(groups, immuneSystem...)
 		groups = append(groups, infection...)
 		sortByInitiative(groups)
+
 		for _, g := range groups {
 			g.attackSelectedEnemy()
 		}
 		infection = filterAlive(infection)
 		immuneSystem = filterAlive(immuneSystem)
+		infections := countUnits(infection)
+		immune := countUnits(immuneSystem)
+		if infections == lastInfectionCount && immune == lastImmuneCount {
+			break
+		}
+		lastInfectionCount = infections
+		lastImmuneCount = immune
 	}
 	return immuneSystem, infection
+}
+
+func boost(boost int, groups []*group) {
+	for _, g := range groups {
+		g.attackPower += boost
+	}
+}
+
+func clone(groups []*group) []*group {
+	c := make([]*group, len(groups))
+	for i, g := range groups {
+		c[i] = g.clone()
+	}
+	return c
 }
 func countUnits(groups []*group) int {
 	count := 0
@@ -152,7 +214,7 @@ func sortByEffectivePower(groups []*group) {
 		ei := groups[i].effectivePower()
 		ej := groups[j].effectivePower()
 		if ei == ej {
-			return groups[i].initiative < groups[j].initiative
+			return groups[i].initiative > groups[j].initiative
 		}
 		return ei > ej
 	})
