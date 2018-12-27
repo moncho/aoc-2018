@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 )
 
 type point struct {
@@ -30,53 +29,26 @@ func main() {
 	var points []point
 	for s.Scan() {
 		var p point
-		fmt.Sscanf(s.Text(), "%d,%d,%d,%d", p.t, p.x, p.y, p.z)
+		fmt.Sscanf(s.Text(), "%d,%d,%d,%d", &p.t, &p.x, &p.y, &p.z)
 		points = append(points, p)
 	}
 	if s.Err() != nil {
 		panic(err)
 	}
+	fmt.Printf("Number of constellations: %d\n", constellations(points))
 }
-
 func constellations(points []point) int {
-	included := make(map[point]bool)
-	count := 0
-	sort.Slice(points, func(i, j int) bool {
-		pi := points[i]
-		pj := points[j]
-		if pi.t != pj.t {
-			return pi.t < pj.t
-		}
-		if pi.t != pj.t {
-			return pi.t < pj.t
-		}
-		if pi.x != pj.x {
-			return pi.x < pj.x
-		}
-		if pi.y != pj.y {
-			return pi.y < pj.y
-		}
-		return pi.z < pj.z
-	})
+	uf := NewWeightedQuickUnion(len(points))
+	pointToInt := make(map[point]int)
 	for i, p := range points {
-		if _, ok := included[p]; ok {
-			continue
-		}
-
-		found := false
-		for j := i + 1; j < len(points); j++ {
-			if p.distanceTo(points[j]) <= 3 {
-				found = true
-				included[p] = true
-				included[points[j]] = true
+		pointToInt[p] = i
+		for point, id := range pointToInt {
+			if p.distanceTo(point) <= 3 {
+				uf.Union(i, id)
 			}
 		}
-		if found {
-			count++
-		}
 	}
-
-	return count
+	return uf.sets
 }
 
 func abs(n int) int {
