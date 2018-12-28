@@ -1,9 +1,5 @@
 package main
 
-var instructionSet = []instruction{
-	addr, addi, mulr, muli, banr, bani, borr, bori, setr, seti, gtir, gtri, gtrr, eqir, eqri, eqrr,
-}
-
 type instruction func(o operation) func(r registers) registers
 
 func addr(o operation) func(r registers) registers {
