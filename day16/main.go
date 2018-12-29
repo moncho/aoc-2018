@@ -24,7 +24,7 @@ type sample struct {
 
 func main() {
 	f, err := os.Open("input.txt")
-
+	defer f.Close()
 	if err != nil {
 		panic(err)
 	}
