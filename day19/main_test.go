@@ -8,6 +8,7 @@ import (
 func Test_run(t *testing.T) {
 	type args struct {
 		p program
+		r registers
 	}
 	tests := []struct {
 		name string
@@ -29,13 +30,14 @@ func Test_run(t *testing.T) {
 						operation{"seti", 9, 0, 5},
 					},
 				},
+				[]int{0, 0, 0, 0, 0, 0},
 			},
 			[]int{6, 5, 6, 0, 0, 9},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := run(tt.args.p); !reflect.DeepEqual(got, tt.want) {
+			if got := run(tt.args.p, tt.args.r); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("run() = %v, want %v", got, tt.want)
 			}
 		})
