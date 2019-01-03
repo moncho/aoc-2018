@@ -5,28 +5,71 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 )
 
-type route struct {
-	path      []rune
-	branches  []*route
-	parent    *route
-	skippable bool
+var movements = map[byte]xy{
+	'N': xy{0, -1},
+	'E': xy{1, 0},
+	'S': xy{0, 1},
+	'W': xy{-1, 0},
 }
 
-func (r *route) longestRoute() int {
-	l := len(r.path)
-	longest := 0
-	for _, b := range r.branches {
-		if b.skippable {
-			continue
-		}
-		bl := b.longestRoute()
-		if bl > longest {
-			longest = bl
+type xy struct {
+	x, y int
+}
+
+func (this xy) move(other xy) xy {
+	return xy{this.x + other.x, this.y + other.y}
+}
+func allDistances(r io.Reader) []int {
+	current := xy{0, 0}
+	type branch struct {
+		xy       xy
+		distance int
+	}
+	var branches []branch
+	distance := 0
+	distances := map[xy]int{
+		current: 0,
+	}
+
+	s := bufio.NewScanner(r)
+	s.Split(bufio.ScanRunes)
+
+	for s.Scan() {
+		r := s.Text()[0]
+		switch r {
+		case 'N', 'E', 'S', 'W':
+			distance++
+			current = current.move(movements[r])
+			if dist, ok := distances[current]; !ok || distance < dist {
+				distances[current] = distance
+			}
+		case '(':
+			branches = append(branches, branch{current, distance})
+		case '|':
+			//peek
+			g := branches[len(branches)-1]
+			distance, current = g.distance, g.xy
+		case ')':
+			//pop
+			branches = branches[:len(branches)-1]
 		}
 	}
-	return l + longest
+	if s.Err() != nil {
+		panic(s.Err())
+	}
+	result := make([]int, len(distances))
+	i := 0
+	for _, v := range distances {
+		result[i] = v
+		i++
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i] < result[j]
+	})
+	return result
 }
 
 func main() {
@@ -36,55 +79,27 @@ func main() {
 	}
 	defer f.Close()
 
-	root := buildRoute(f)
+	routes := allDistances(f)
 
-	fmt.Printf("What is the largest number of doors you would be required to pass through to reach a room? %d\n", root.longestRoute())
+	//root := buildRoute(f)
+
+	fmt.Printf("What is the largest number of doors you would be required to pass through to reach a room? %d\n", routes[len(routes)-1])
+
+	//routes := root.allRoutes()
+
+	routes = filter(routes, 1000)
+	fmt.Printf("How many rooms have a shortest path from your current location that pass through at least 1000 doors? %d\n", len(routes))
+
 }
 
-func buildRoute(r io.Reader) *route {
-	s := bufio.NewScanner(r)
-	s.Split(bufio.ScanRunes)
+func filter(routes []int, n int) []int {
+	var res []int
 
-	cur := &route{}
-	var prev rune
-	for s.Scan() {
-		r := s.Text()[0]
-		switch r {
-		case '^', '$', '\n':
-			break
-		case '(':
-			branch := &route{
-				parent: cur,
-			}
-			cur.branches = append(cur.branches, branch)
-			cur = branch
-		case '|':
-			branch := &route{
-				parent: cur.parent,
-			}
-			cur.parent.branches = append(cur.parent.branches, branch)
-			cur = branch
-
-		case ')':
-			if prev == '|' {
-				cur.parent.branches = cur.parent.branches[:len(cur.parent.branches)-1]
-				for _, b := range cur.parent.branches {
-					b.skippable = true
-				}
-			}
-			cur = cur.parent
-
-		default:
-			cur.path = append(cur.path, rune(r))
+	for _, r := range routes {
+		if r >= n {
+			res = append(res, r)
 		}
-		prev = rune(r)
 	}
-	if s.Err() != nil {
-		panic(s.Err())
-	}
-	root := cur
-	for root.parent != nil {
-		root = root.parent
-	}
-	return root
+
+	return res
 }
