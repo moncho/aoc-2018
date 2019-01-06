@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"sort"
 	"strings"
 )
 
 const (
-	plant   = '#'
-	noplant = '.'
+	plant        = '#'
+	noplant      = '.'
+	fiftyBillion = 50000000000
 )
 
 type pots struct {
@@ -79,20 +79,6 @@ func matchInNotes(notes []note, pattern []bool) bool {
 	}
 	return false
 }
-func sortNotes(notes []note) {
-	sort.Slice(notes, func(i, j int) bool {
-		for ii, s := range notes[i].state {
-			if s != notes[j].state[ii] {
-				if s {
-					return false
-				} else {
-					return true
-				}
-			}
-		}
-		return notes[i].plant
-	})
-}
 
 func main() {
 	f, err := os.Open("input.txt")
@@ -103,8 +89,9 @@ func main() {
 	}
 	s := bufio.NewScanner(f)
 	s.Scan()
-	pots := &pots{
-		pots:          parse(strings.TrimLeft(s.Text(), "initial state: ")),
+	initialState := parse(strings.TrimLeft(s.Text(), "initial state: "))
+	p := &pots{
+		pots:          initialState,
 		zeroPotOffset: 0,
 	}
 
@@ -124,24 +111,36 @@ func main() {
 	if s.Err() != nil {
 		panic(err)
 	}
+	simulate(20, p, notes)
 
-	//sortNotes(notes)
+	fmt.Printf("After 20 generations, what is the sum of the numbers of all pots which contain a plant? %d\n", p.potNumSum())
 
-	printPots(pots.pots)
-	fmt.Printf("notes: %d\n", len(notes))
-
-	simulate(20, pots, notes)
-	fmt.Println("Pots after 20 generations")
-	printPots(pots.pots)
-
-	fmt.Printf("After 20 generations, what is the sum of the numbers of all pots which contain a plant? %d\n", pots.potNumSum())
+	p = &pots{
+		pots:          initialState,
+		zeroPotOffset: 0,
+	}
+	gen, growthPerGen := simulate(fiftyBillion, p, notes)
+	sum := p.potNumSum() + ((fiftyBillion - gen) * growthPerGen)
+	fmt.Printf("After fifty billion generations, what is the sum of the numbers of all pots which contain a plant? %d\n", sum)
 
 }
 
-func simulate(n int, pots *pots, notes []note) {
+//simulate grows the given pots until the given number of generations
+//is reached or the generation growth stabilizes
+func simulate(n int, pots *pots, notes []note) (int, int) {
+	var lastSum int
+	var diff int
 	for i := 0; i < n; i++ {
 		pots.grow(notes)
+		sum := pots.potNumSum()
+		if sum-lastSum == diff {
+			return i + 1, diff
+		}
+		diff = sum - lastSum
+		lastSum = sum
+
 	}
+	return n, diff
 }
 
 func printPots(pots []bool) {
