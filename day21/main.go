@@ -41,30 +41,55 @@ func main() {
 		panic(err)
 	}
 	reg := make([]int, 6)
-	//Guessed by s
+	//Guessed by running the program an observing the state of register 5
+	//on the first comparison with register 0. run stops the program on
+	//this comparison
 	reg[0] = 15690445
 	r := run(program{pointer, operations}, reg)
 	fmt.Printf("Register values when the background process halts: %v\n", r)
+
+	reg2 := []int{0, 0, 0, 0, 0, 0}
+
+	reg2 = part2Run(program{pointer, operations}, reg2)
+	fmt.Printf("Register values when the background process halts: %v\n", reg2)
 
 }
 
 func run(p program, reg registers) registers {
 	instructionPointer := 0
-	counter := 0
-
 	for instructionPointer < len(p.instructions) {
 		reg[p.instructionPointer] = instructionPointer
 		op := p.instructions[instructionPointer]
-		ins := instructionSet[op.opcode]
-		reg = ins(op)(reg)
-		instructionPointer = reg[p.instructionPointer]
-		instructionPointer++
-		counter++
-		//Uncomment to check the expected value on register 0 to stop the process
-		/*if op.opcode == "eqrr" && (op.inputA == 0 || op.inputB == 0) {
-			fmt.Printf("Stopped on %d\n", counter)
+		reg = instructionSet[op.opcode](op)(reg)
+		instructionPointer = reg[p.instructionPointer] + 1
+		//This opcode is the only operation from input
+		//that uses register 0
+		if op.opcode == "eqrr" {
 			break
-		}*/
+		}
+	}
+	return reg
+}
+
+func part2Run(p program, reg registers) registers {
+	instructionPointer := 0
+	seen := make(map[int]bool)
+	last := 0
+	for instructionPointer < len(p.instructions) {
+		reg[p.instructionPointer] = instructionPointer
+		op := p.instructions[instructionPointer]
+		reg = instructionSet[op.opcode](op)(reg)
+		instructionPointer = reg[p.instructionPointer] + 1
+		//This opcode is the only operation from input
+		//that uses register 0
+		if op.opcode == "eqrr" {
+			if seen[reg[op.inputA]] {
+				fmt.Printf("Last value on reg used on the comparision, before a duplicate: %d\n", last)
+				break
+			}
+			seen[reg[op.inputA]] = true
+			last = reg[op.inputA]
+		}
 
 	}
 	return reg
