@@ -41,8 +41,8 @@ func main() {
 		panic(err)
 	}
 	reg := make([]int, 6)
-	//Guessed by running the program an observing the state of register 5
-	//on the first comparison with register 0. run stops the program on
+	//Guessed by running the program an observing the state of register 4
+	//on the first comparison with register 0. run func stops the program on
 	//this comparison
 	reg[0] = 15690445
 	r := run(program{pointer, operations}, reg)
@@ -64,6 +64,7 @@ func run(p program, reg registers) registers {
 		instructionPointer = reg[p.instructionPointer] + 1
 		//This opcode is the only operation from input
 		//that uses register 0
+		//eqrr 4 0 2
 		if op.opcode == "eqrr" {
 			break
 		}
@@ -82,9 +83,10 @@ func part2Run(p program, reg registers) registers {
 		instructionPointer = reg[p.instructionPointer] + 1
 		//This opcode is the only operation from input
 		//that uses register 0
+		//eqrr 4 0 2
 		if op.opcode == "eqrr" {
 			if seen[reg[op.inputA]] {
-				fmt.Printf("Last value on reg used on the comparision, before a duplicate: %d\n", last)
+				fmt.Printf("Last value on reg 4 to compare to registry 0, before the first duplicate on reg 4: %d\n", last)
 				break
 			}
 			seen[reg[op.inputA]] = true
