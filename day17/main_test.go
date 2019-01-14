@@ -103,7 +103,7 @@ func Test_flow(t *testing.T) {
 	}
 	groundMap := newGroundMap(scan, minX, minY, maxX, maxY)
 	x, y := groundMap.spring()
-	simulateWaterFlow(x, y, &groundMap)
+	simulateWaterFlow(x, y, groundMap)
 	var b strings.Builder
 	print(&b, groundMap)
 

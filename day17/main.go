@@ -120,7 +120,7 @@ func main() {
 	groundMap := newGroundMap(clay, lowestX, lowestY, maxX, maxY)
 
 	x, y := groundMap.spring()
-	simulateWaterFlow(x, y, &groundMap)
+	simulateWaterFlow(x, y, groundMap)
 	wc, fc := groundMap.waterReach()
 	fmt.Printf("How many tiles can the water reach within the range of y values in your scan? %d %d, sum: %d\n", wc, fc, wc+fc)
 }
@@ -154,7 +154,7 @@ func newGroundMap(clayScan []xy, minX, minY, maxX, maxY int) groundMap {
 	ground.terrain = lines
 	return ground
 }
-func simulateWaterFlow(springX, springY int, gm *groundMap) {
+func simulateWaterFlow(springX, springY int, gm groundMap) {
 	//Sources of water flow, the initial source of water is the
 	//spring. Additional sources might appear as water overflows
 	//clay layers.
@@ -181,6 +181,8 @@ func simulateWaterFlow(springX, springY int, gm *groundMap) {
 				y++
 			} else if terrain == waterFlow {
 				//A water flow is already present, simulation is back from the level below
+				//Current source has filled everything with water as much as it could,
+				//simulation will continue with other sources, if any.
 				break
 			} else {
 				//Clay layer, left and right positions are explored to check
